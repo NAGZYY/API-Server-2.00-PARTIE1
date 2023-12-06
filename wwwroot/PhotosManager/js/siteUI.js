@@ -229,56 +229,51 @@ $(document).ready(function () {
             });
             restoreContentScrollPosition();
 
-            $(".editCmd").on("click", function () {
-                saveContentScrollPosition();
-                renderEditContactForm($(this).attr("editContactId"));
-            });
-            $(".deleteCmd").on("click", function () {
+            $(".deleteCmd").on("click", function () { // Surprimmer utilisateur
                 saveContentScrollPosition();
                 renderDelete(accounts["data"].find(user => user["Id"] == $(this).attr("deleteContactId")));
             });
-            $(".addAdminCmd").on("click", function () {
+            $(".addAdminCmd").on("click", function () { // Changé utilisateur pour admin
                 saveContentScrollPosition();
                 let profilToUpdate = accounts["data"].find(user => user["Id"] == $(this).attr("editContactId"));
                 profilToUpdate.Authorizations["readAccess"] = 2;
                 profilToUpdate.Authorizations["writeAccess"] = 2;
                 profilToUpdate.Password = "";
                 profilToUpdate.adminSender = API.retrieveLoggedUser().Id
-                API.modifyUserPrivilege(profilToUpdate).then(() => {
+                API.modifyUserAccessibility(profilToUpdate).then(() => {
                     renderManageUser();
                 });
             });
-            $(".removeAdminCmd").on("click", function () {
+            $(".removeAdminCmd").on("click", function () { // Changé utilisateur pour non admin
                 saveContentScrollPosition();
                 let profilToUpdate = accounts["data"].find(user => user["Id"] == $(this).attr("editContactId"));
                 profilToUpdate.Authorizations["readAccess"] = 1;
                 profilToUpdate.Authorizations["writeAccess"] = 1;
                 profilToUpdate.Password = "";
                 profilToUpdate.adminSender = API.retrieveLoggedUser().Id
-                API.modifyUserPrivilege(profilToUpdate).then(() => {
+                API.modifyUserAccessibility(profilToUpdate).then(() => {
                     renderManageUser();
                 });
             });
-            $(".addBlockedCmd").on("click", function () {
+            $(".addBlockedCmd").on("click", function () { // Changé utilisateur pour bloqué
                 saveContentScrollPosition();
                 let profilToUpdate = accounts["data"].find(user => user["Id"] == $(this).attr("editContactId"));
-                console.log(profilToUpdate);
-                console.log(profilToUpdate.isBlocked);
+
                 profilToUpdate.isBlocked = true;
                 profilToUpdate.Password = "";
                 profilToUpdate.adminSender = API.retrieveLoggedUser().Id
-                API.modifyUserPrivilege(profilToUpdate).then(() => {
+                API.modifyUserAccessibility(profilToUpdate).then(() => {
                     renderManageUser();
-                    console.log(profilToUpdate.isBlocked);
+                    console.log(profilToUpdate);
                 });
             });
-            $(".removeBlockedCmd").on("click", function () {
+            $(".removeBlockedCmd").on("click", function () { // Changé utilisateur pour non bloqué
                 saveContentScrollPosition();
                 let profilToUpdate = accounts["data"].find(user => user["Id"] == $(this).attr("editContactId"));
                 profilToUpdate.isBlocked = false;
                 profilToUpdate.Password = "";
                 profilToUpdate.adminSender = API.retrieveLoggedUser().Id
-                API.modifyUserPrivilege(profilToUpdate).then(() => {
+                API.modifyUserAccessibility(profilToUpdate).then(() => {
                     renderManageUser();
                 });
             });

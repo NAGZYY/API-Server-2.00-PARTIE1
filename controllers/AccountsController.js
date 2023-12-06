@@ -145,7 +145,6 @@ export default class AccountsController extends Controller {
                 let foundedUser = this.repository.findByField("Id", user.Id);
                 if (foundedUser != null) {
                     if (user.adminSender == null ){
-                        user.Authorizations = foundedUser.Authorizations; 
                         user.Authorizations = foundedUser.Authorizations;                            
                         user.isBlocked = foundedUser.isBlocked;
                     } else {
@@ -157,7 +156,6 @@ export default class AccountsController extends Controller {
                         user.Avatar = foundedUser.Avatar;
                         user.adminSender = undefined;
                     }
-                    user.isBlocked = foundedUser.isBlocked;
                     user.VerifyCode = foundedUser.VerifyCode;
                     if (user.Password == '') { // mdp non modifié
                         user.Password = foundedUser.Password;

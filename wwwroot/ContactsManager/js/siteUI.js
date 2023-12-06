@@ -52,7 +52,7 @@ async function renderContacts() {
             $("#content").append(renderContact(contact));
         });
         restoreContentScrollPosition();
-        // Attached click events on command icons
+
         $(".editCmd").on("click", function () {
             saveContentScrollPosition();
             renderEditContactForm($(this).attr("editContactId"));

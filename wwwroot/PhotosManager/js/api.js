@@ -129,7 +129,7 @@ class API {
             });
         });
     }
-    static modifyUserPrivilege(profil) {
+        static modifyUserAccessibility(profil) {
         API.initHttpState();
         return new Promise(resolve => {
             $.ajax({
