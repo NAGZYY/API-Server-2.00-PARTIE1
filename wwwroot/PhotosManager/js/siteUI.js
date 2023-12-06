@@ -90,9 +90,9 @@ $(document).ready(function () {
                 <i class="menuIcon fa fa-image mx-2"></i>Liste des photos
             </span>
         `));
-        menu.append($(`<div class="dropdown-divider"></div> `));
+            menu.append($(`<div class="dropdown-divider"></div> `));
 
-        menu.append($(`
+            menu.append($(`
                 <span class="dropdown-item" id="sortByDateCmd">
                 <i class="menuIcon fa fa-check mx-2"></i>
                 <i class="menuIcon fa fa-calendar mx-2"></i>
@@ -599,7 +599,7 @@ $(document).ready(function () {
         initFormValidation();
         initImageUploaders();
         $('#abortCmd').on("click", async function () {
-            renderListPhotos();
+            renderPhotos();
         });
         $('#deleteCmd').on('click', async function () {
             renderDelete();
