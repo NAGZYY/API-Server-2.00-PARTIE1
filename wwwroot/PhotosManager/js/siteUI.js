@@ -6,6 +6,23 @@ $(document).ready(function () {
 
     Init_UI();
 
+    // Initial
+    async function Init_UI() {
+        try {
+            let loggedUser = API.retrieveLoggedUser();
+
+            if (loggedUser == null) {
+                renderLogin();
+            } else if (API.retrieveLoggedUser().VerifyCode != "unverified") {
+                renderPhotos();
+            } else if (API.retrieveLoggedUser().VerifyCode == "unverified") {
+                renderVerification();
+            }
+        } catch (e) {
+            console.log(e.message);
+        }
+    }
+
     function showWaitingGif() {
         eraseContent();
         $("#content").append($("<div class='waitingGifcontainer'><img class='waitingGif' src='images/Loading_icon.gif' /></div>'"));
@@ -69,14 +86,13 @@ $(document).ready(function () {
         } else {
             if (loggedUser.Authorizations["readAccess"] == 2 && loggedUser.Authorizations["writeAccess"] == 2 && API.retrieveLoggedUser().VerifyCode != "unverified") {
                 menu.append($(`
-            <span class="dropdown-item" id="manageUserCmd">
-                <i class="menuIcon fas fa-user-cog mx-2"></i>
-                Gestion des usagers
-            </span>
-        `));
+                    <span class="dropdown-item" id="manageUserCmd">
+                        <i class="menuIcon fas fa-user-cog mx-2"></i>
+                        Gestion des usagers
+                    </span>
+                `));
 
                 menu.append($(`<div class="dropdown-divider"></div>`));
-
             }
             menu.append($(`
             <span class="dropdown-item" id="logoutCmd"><i class="menuIcon fa fa-sign-out mx-2"></i>Déconnexion</span>
@@ -179,6 +195,8 @@ $(document).ready(function () {
         });
 
     }
+
+    // Liste des photos
     function renderPhotos() {
         let currentUser = API.retrieveLoggedUser();
         if (currentUser != null) {
@@ -189,6 +207,8 @@ $(document).ready(function () {
 
         restoreContentScrollPosition();
     }
+
+    // Option Admin
     async function renderManageUser() {
         let currentUser = API.retrieveLoggedUser();
         if (currentUser != null) {
@@ -201,70 +221,75 @@ $(document).ready(function () {
         eraseContent();
         updateHeader("Gestion des usagers", "manageUser");
         $("#newPhotoCmd").hide();
-        let contacts = await API.GetAccounts();
-        if (contacts !== null) {
-            contacts["data"].forEach(contact => {
-                if (contact["Id"] != API.retrieveLoggedUser().Id)
-                    $("#content").append(renderUser(contact));
+        let accounts = await API.GetAccounts();
+        if (accounts !== null) {
+            accounts["data"].forEach(account => {
+                if (account["Id"] != API.retrieveLoggedUser().Id)
+                    $("#content").append(renderUser(account));
             });
             restoreContentScrollPosition();
-            // Attached click events on command icons
+
             $(".editCmd").on("click", function () {
                 saveContentScrollPosition();
                 renderEditContactForm($(this).attr("editContactId"));
             });
             $(".deleteCmd").on("click", function () {
                 saveContentScrollPosition();
-                renderDelete(contacts["data"].find(user => user["Id"] == $(this).attr("deleteContactId")));
+                renderDelete(accounts["data"].find(user => user["Id"] == $(this).attr("deleteContactId")));
             });
             $(".addAdminCmd").on("click", function () {
                 saveContentScrollPosition();
-                let profilToUpdate = contacts["data"].find(user => user["Id"] == $(this).attr("editContactId"));
+                let profilToUpdate = accounts["data"].find(user => user["Id"] == $(this).attr("editContactId"));
                 profilToUpdate.Authorizations["readAccess"] = 2;
                 profilToUpdate.Authorizations["writeAccess"] = 2;
                 profilToUpdate.Password = "";
                 profilToUpdate.adminSender = API.retrieveLoggedUser().Id
-                API.modifyUserProfil(profilToUpdate);
-                renderManageUser();
+                API.modifyUserPrivilege(profilToUpdate).then(() => {
+                    renderManageUser();
+                });
             });
             $(".removeAdminCmd").on("click", function () {
                 saveContentScrollPosition();
-                let profilToUpdate = contacts["data"].find(user => user["Id"] == $(this).attr("editContactId"));
+                let profilToUpdate = accounts["data"].find(user => user["Id"] == $(this).attr("editContactId"));
                 profilToUpdate.Authorizations["readAccess"] = 1;
                 profilToUpdate.Authorizations["writeAccess"] = 1;
                 profilToUpdate.Password = "";
                 profilToUpdate.adminSender = API.retrieveLoggedUser().Id
-                API.modifyUserProfil(profilToUpdate);
-                renderManageUser();
+                API.modifyUserPrivilege(profilToUpdate).then(() => {
+                    renderManageUser();
+                });
             });
             $(".addBlockedCmd").on("click", function () {
                 saveContentScrollPosition();
-                let profilToUpdate = contacts["data"].find(user => user["Id"] == $(this).attr("editContactId"));
+                let profilToUpdate = accounts["data"].find(user => user["Id"] == $(this).attr("editContactId"));
+                console.log(profilToUpdate);
+                console.log(profilToUpdate.isBlocked);
                 profilToUpdate.isBlocked = true;
                 profilToUpdate.Password = "";
                 profilToUpdate.adminSender = API.retrieveLoggedUser().Id
-                API.modifyUserProfil(profilToUpdate);
-                renderManageUser();
+                API.modifyUserPrivilege(profilToUpdate).then(() => {
+                    renderManageUser();
+                    console.log(profilToUpdate.isBlocked);
+                });
             });
             $(".removeBlockedCmd").on("click", function () {
                 saveContentScrollPosition();
-                let profilToUpdate = contacts["data"].find(user => user["Id"] == $(this).attr("editContactId"));
+                let profilToUpdate = accounts["data"].find(user => user["Id"] == $(this).attr("editContactId"));
                 profilToUpdate.isBlocked = false;
                 profilToUpdate.Password = "";
                 profilToUpdate.adminSender = API.retrieveLoggedUser().Id
-                API.modifyUserProfil(profilToUpdate);
-                renderManageUser();
+                API.modifyUserPrivilege(profilToUpdate).then(() => {
+                    renderManageUser();
+                });
             });
             $(".contactRow").on("click", function (e) { e.preventDefault(); })
 
         } else {
             renderError("Service introuvable");
         }
-        $("#content").append(
-            $(`
-            
-        `))
     }
+
+    // À propos
     function renderAbout() {
         let currentUser = API.retrieveLoggedUser();
         if (currentUser != null) {
@@ -297,6 +322,8 @@ $(document).ready(function () {
             </div>
         `));
     }
+
+    // Connexion
     function renderLogin(loginMessage = "", Email = "", EmailError = "", passwordError = "") {
         noTimeout();
         eraseContent();
@@ -335,10 +362,12 @@ $(document).ready(function () {
         });
 
         initFormValidation();
-        // call back la soumission du formulaire 
+
         $('#loginForm').on("submit", function (event) {
             let profil = getFormData($('#loginForm'));
-            event.preventDefault();// empêcher le fureteur de soumettre une requête de soumission
+
+            event.preventDefault();
+
             API.eraseAccessToken();
             API.login(profil.Email, profil.Password).then(() => {
                 switch (API.currentStatus) {
@@ -362,12 +391,14 @@ $(document).ready(function () {
                         renderLogin("Votre compte a été bloqué par l'administrateur", profil.Email);
                         break;
                     default:
-                        renderError();
+                        renderError("Une erreur est survenue, veuillez rafraîchir et réessayer");
                         break;
                 }
             });
         });
     }
+
+    // Page de vérification
     function renderVerification(verificationError = "") {
         noTimeout();
         eraseContent();
@@ -393,15 +424,16 @@ $(document).ready(function () {
         `));
 
         initFormValidation();
-        // call back la soumission du formulaire 
+
         $('#verifyProfilForm').on("submit", function (event) {
             let form = getFormData($('#verifyProfilForm'));
-            event.preventDefault();// empêcher le fureteur de soumettre une requête de soumission
+            event.preventDefault();
 
             verifiedAccount(form)
         });
     }
 
+    //  Vérifier le code
     async function verifiedAccount(form) {
         if (await API.verifyEmail(API.retrieveLoggedUser().Id, form.verificationCode)) {
             renderPhotos();
@@ -410,11 +442,14 @@ $(document).ready(function () {
         }
     }
 
+    //  Inscription
     function renderCreateAccount() {
         noTimeout();
         eraseContent(); // effacer le conteneur #content 
-        updateHeader("Inscription", "createProfil"); // mettre à jour l’entête et menu
-        $("#newPhotoCmd").hide(); // camoufler l’icone de commande d’ajout de photo
+
+        updateHeader("Inscription", "createAccount");
+
+        $("#newPhotoCmd").hide();
         $("#content").append(`
     <form class="form" id="createProfilForm">
         <fieldset>
@@ -487,17 +522,15 @@ $(document).ready(function () {
         <button class="form-control btn-secondary" id="abortCmd">Annuler</button>
     </div>
     `);
-        $('#loginCmd').on("click", async function () {
-            renderLogin();
-        });
         initFormValidation();
         initImageUploaders();
-        $('#abortCmd').on("click", async function () {
+
+        $('#abortCmd').on("click", async function () { // Annuler -> Liste de photos
             renderLogin();
         });
-        // ajouter le mécanisme de vérification de doublon de courriel 
-        addConflictValidation(API.checkConflictURL(), 'Email', 'saveUser');
-        // call back la soumission du formulaire 
+
+        addConflictValidation(API.checkConflictURL(), 'Email', 'saveUser'); // Vérif 2 courriel
+
         $('#createProfilForm').on("submit", function (event) {
             let profil = getFormData($('#createProfilForm'));
             delete profil.matchedPassword;
@@ -505,12 +538,16 @@ $(document).ready(function () {
             if (!profil.Avatar) {
                 profil.Avatar = "no-avatar.png";
             }
-            event.preventDefault();// empêcher le fureteur de soumettre une requête de soumission 
-            showWaitingGif(); // afficher GIF d’attente 
-            API.register(profil); // commander la création au service API
+            event.preventDefault();
+
+            showWaitingGif();
+            API.register(profil);
+            // Message vérif courriel
             renderLogin("Votre compte a été créé. Veuillez prendre vos courriels pour récupérer votre code de vérification qui vous sera demandé lors de votre prochaine connexion.");
         });
     }
+
+    // Modifier profil
     function renderEditProfil() {
         let loggedUser = API.retrieveLoggedUser();
         noTimeout();
@@ -593,18 +630,18 @@ $(document).ready(function () {
                 <hr> <button class="form-control btn-warning" id="deleteCmd">Effacer le compte</button>
             </div>
         `));
-        $('#loginCmd').on("click", async function () {
-            renderLogin();
-        });
         initFormValidation();
         initImageUploaders();
-        $('#abortCmd').on("click", async function () {
+
+        $('#abortCmd').on("click", async function () { // Annuler -> Liste de photos
             renderPhotos();
         });
-        $('#deleteCmd').on('click', async function () {
+        $('#deleteCmd').on('click', async function () { // Supprimer compte
             renderDelete();
         });
+
         addConflictValidation(API.checkConflictURL(), 'Email', 'saveUser');
+
         $('#editProfilForm').on("submit", function (event) {
             let profil = getFormData($('#editProfilForm'));
             delete profil.matchedPassword;
@@ -616,14 +653,18 @@ $(document).ready(function () {
             });
         });
     }
+
+    // Confirmation de suppression de compte
     async function renderDelete(user = null) {
         if (API.retrieveLoggedUser() == null) {
             renderLogin();
         }
+
         noTimeout();
         eraseContent();
         updateHeader("Retrait de compte", "delete");
         $("#newPhotoCmd").hide();
+
         if (user == null) {
             $("#content").append(
                 $(`
@@ -648,37 +689,39 @@ $(document).ready(function () {
         } else {
             $("#content").append(
                 $(`
-        <div class="content" style="text-align:center">
-            <div class="form">
-            <h3>Voulez-vous vraiment effacer cet usager et toutes ces photos?</h3>
-        </div>
-        <div class="UserLayout" style="margin: auto; width: fit-content;">
-            <div class="UserAvatar" style="background-image:url('${user.Avatar}')"></div>
-            <div class="UserInfo">
-                <span class="UserName">${user.Name}</span>
-                <a href="mailto:${user.Email}" class="UserEmail" target="_blank" >${user.Email}</a>
-            </div>
-        </div>
-        <div class="form">
-        <button class="form-control btn-danger" id="deleteCmd">Effacer</button>
-        </div>
-        <div class="cancel">
-        <button class="form-control btn-secondary" id="abortCmd">Annuler</button>
-        </div>
-        </div>
-    `));
+                <div class="content" style="text-align:center">
+                    <div class="form">
+                    <h3>Voulez-vous vraiment effacer cet usager et toutes ces photos?</h3>
+                </div>
+                <div class="UserLayout" style="margin: auto; width: fit-content;">
+                    <div class="UserAvatar" style="background-image:url('${user.Avatar}')"></div>
+                    <div class="UserInfo">
+                        <span class="UserName">${user.Name}</span>
+                        <a href="mailto:${user.Email}" class="UserEmail" target="_blank" >${user.Email}</a>
+                    </div>
+                </div>
+                <div class="form">
+                <button class="form-control btn-danger" id="deleteCmd">Effacer</button>
+                </div>
+                <div class="cancel">
+                <button class="form-control btn-secondary" id="abortCmd">Annuler</button>
+                </div>
+                </div>
+            `));
             $('#deleteCmd').on("click", async function () {
                 API.unsubscribeAccount(user["Id"]);
                 renderPhotos();
             });
         }
-        $('#abortCmd').on("click", async function () {
+        $('#abortCmd').on("click", async function () { // Annuler -> liste des photos
             renderPhotos();
         });
     }
+
+    // Erreur
     function renderError() {
         eraseContent();
-        updateHeader("Problème", "error");
+        updateHeader("Erreur", "error");
         $("#newPhotoCmd").hide();
         $("#content").append(
             $(`
@@ -688,7 +731,7 @@ $(document).ready(function () {
             </div>
             <hr>
             <div class="form">
-                <button class="form-control btn-primary" id="loginCmd">Connexion</button>
+                <button class="form-control btn-primary" id="loginCmd">Essayez de vous reconnectern</button>
             </div>
         </div>
         `));
@@ -696,52 +739,41 @@ $(document).ready(function () {
             renderLogin();
         });
     }
-    function renderUser(contact) {
-        let adminAccessToogle;
-        let userBlockToogleButton;
 
-        if (contact.Authorizations["readAccess"] == 2 && contact.Authorizations["writeAccess"] == 2) {
-            adminAccessToogle = `<span class="removeAdminCmd dodgerblueCmd fas fa-user-cog" editContactId="${contact.Id}" title="Usager / promouvoir administrateur"></span>`;
+    // Liste des utilisateurs pour panel admin
+    function renderUser(account) {
+        let adminAccessButton;
+        let userBlockButton;
+
+        if (account.Authorizations["readAccess"] == 2 && account.Authorizations["writeAccess"] == 2) {
+            adminAccessButton = `<span class="removeAdminCmd dodgerblueCmd fas fa-user-cog" editContactId="${account.Id}" title="Usager / promouvoir administrateur"></span>`;
         } else {
-            adminAccessToogle = `<span class="addAdminCmd dodgerblueCmd fas fa-user-alt" editContactId="${contact.Id}" title="Administrateur / retirer les droits administrateur"></span>`;
+            adminAccessButton = `<span class="addAdminCmd dodgerblueCmd fas fa-user-alt" editContactId="${account.Id}" title="Administrateur / retirer les droits administrateur"></span>`;
         }
 
-        if (contact.isBlocked) {
-            userBlockToogleButton = `<span class="removeBlockedCmd redCmd fa fa-ban" editContactId="${contact.Id}" title="Usager bloqué / débloquer l’accès"></span>`;
+        console.log(account);
+        console.log(account.isBlocked);
+        if (account.isBlocked) {
+            userBlockButton = `<span class="removeBlockedCmd redCmd fa fa-ban" editContactId="${account.Id}" title="Usager bloqué / débloquer l’accès"></span>`;
         } else {
-            userBlockToogleButton = `<span class="addBlockedCmd fa-regular fa-circle greenCmd" editContactId="${contact.Id}" title="Usager non bloqué / bloquer l’accès"></span>`;
+            userBlockButton = `<span class="addBlockedCmd fa-regular fa-circle greenCmd" editContactId="${account.Id}" title="Usager non bloqué / bloquer l’accès"></span>`;
         }
 
         return $(`
-     <div class="UserRow" contact_id=${contact.Id}">
-        <div class="UserContainer noselect">
-            <div class="UserLayout">
-                 <div class="UserAvatar" style="background-image:url('${contact.Avatar}')"></div>
+        <div class="UserRow" contact_id=${account.Id}">
+            <div class="UserContainer noselect">
+                <div class="UserLayout">
+                 <div class="UserAvatar" style="background-image:url('${account.Avatar}')"></div>
                  <div class="UserInfo">
-                    <span class="UserName">${contact.Name}</span>
-                    <a href="mailto:${contact.Email}" class="UserEmail" target="_blank" >${contact.Email}</a>
+                    <span class="UserName">${account.Name}</span>
+                    <a href="mailto:${account.Email}" class="UserEmail" target="_blank" >${account.Email}</a>
                 </div>
             </div>
-            <div class="UserCommandPanel">` + adminAccessToogle + userBlockToogleButton +
-            `<span class="deleteCmd goldenrodCmd fas fa-user-slash" deleteContactId="${contact.Id}" title="Effacer ${contact.Name}"></span>
+            <div class="UserCommandPanel">` + adminAccessButton + userBlockButton +
+                `<span class="deleteCmd goldenrodCmd fas fa-user-slash" deleteContactId="${account.Id}" title="Effacer ${account.Name}"></span>
             </div>
         </div>
     </div>
     `);
-    }
-    async function Init_UI() {
-        try {
-            let loggedUser = API.retrieveLoggedUser();
-
-            if (loggedUser == null) {
-                renderLogin();
-            } else if (API.retrieveLoggedUser().VerifyCode != "unverified") {
-                renderPhotos();
-            } else if (API.retrieveLoggedUser().VerifyCode == "unverified") {
-                renderVerification();
-            }
-        } catch (e) {
-            console.log(e.message);
-        }
     }
 });

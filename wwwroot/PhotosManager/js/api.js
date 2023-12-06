@@ -1,6 +1,6 @@
 ////////////////////////////////////////////// API photos_APIs call ///////////////////////////////////////////////////////
 
-const serverHost = "http://localhost:5000"; //"fire-screeching-gym.glitch.me";
+const serverHost = "http://localhost:5000"; //"https://fire-screeching-gym.glitch.me"; //"http://localhost:5000";
 const photos_API = "/api/photos";
 
 class API {
@@ -123,6 +123,22 @@ class API {
                 data: JSON.stringify(profil),
                 success: (profil) => {
                     API.storeLoggedUser(profil);
+                    resolve(profil);
+                },
+                error: xhr => { API.setHttpErrorState(xhr); resolve(false); }
+            });
+        });
+    }
+    static modifyUserPrivilege(profil) {
+        API.initHttpState();
+        return new Promise(resolve => {
+            $.ajax({
+                url: serverHost + "/Accounts/modify/" + profil.Id,
+                type: 'PUT',
+                contentType: 'application/json',
+                headers: API.getBearerAuthorizationToken(),
+                data: JSON.stringify(profil),
+                success: (profil) => {
                     resolve(profil);
                 },
                 error: xhr => { API.setHttpErrorState(xhr); resolve(false); }

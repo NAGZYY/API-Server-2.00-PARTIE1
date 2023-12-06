@@ -139,26 +139,27 @@ export default class AccountsController extends Controller {
     }
     // PUT:account/modify body payload[{"Id": 0, "Name": "...", "Email": "...", "Password": "..."}]
     modify(user) {
-        // empty asset members imply no change and there values will be taken from the stored record
         if (Authorizations.writeGranted(this.HttpContext, Authorizations.user())) {
             if (this.repository != null) {
                 user.Created = utilities.nowInSeconds();
-                //FoundedUser = valeur Original
                 let foundedUser = this.repository.findByField("Id", user.Id);
                 if (foundedUser != null) {
                     if (user.adminSender == null ){
-                        user.Authorizations = foundedUser.Authorizations; // user cannot change its own authorizations if he is its own sender
+                        user.Authorizations = foundedUser.Authorizations; 
+                        user.Authorizations = foundedUser.Authorizations;                            
+                        user.isBlocked = foundedUser.isBlocked;
                     } else {
                         let foundedAdminSender = this.repository.findByField("Id", user.adminSender);
                         if (foundedAdminSender.Authorizations["readAccess"] != 2 || foundedAdminSender.Authorizations["writeAccess"] != 2 ){
                             user.Authorizations = foundedUser.Authorizations;
+                            user.isBlocked = foundedUser.isBlocked;
                         }
                         user.Avatar = foundedUser.Avatar;
                         user.adminSender = undefined;
                     }
                     user.isBlocked = foundedUser.isBlocked;
                     user.VerifyCode = foundedUser.VerifyCode;
-                    if (user.Password == '') { // password not changed
+                    if (user.Password == '') { // mdp non modifié
                         user.Password = foundedUser.Password;
                     }
                     if (user.Email != foundedUser.Email) {
