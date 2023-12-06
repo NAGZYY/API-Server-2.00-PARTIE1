@@ -11,6 +11,7 @@ export default class User extends Model {
         this.addField('Created','integer');
         this.addField('VerifyCode','string');
         this.addField('Authorizations','object');
+        this.addField("isBlocked", 'boolean');
 
         this.setKey("Email");
     }

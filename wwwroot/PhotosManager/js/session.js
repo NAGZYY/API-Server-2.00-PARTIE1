@@ -15,7 +15,11 @@ function createTimeoutPopup() {
 let currentTimeouID = undefined;
 let initialized = false;
 let timeBeforeRedirect = 5;
-let timeoutCallBack = () => {};
+let TimeOutExpireTime = 300;
+let timeoutCallBack = () => {
+    noTimeout();
+    renderLogin();
+};
 let infinite = -1;
 let timeLeft = infinite;
 let maxStallingTime = infinite;
@@ -33,7 +37,7 @@ function timeout() {
     startCountdown();
 }
 function startCountdown() {
-    if (!initialized) initTimeout();
+    if (!initialized) initTimeout(TimeOutExpireTime);
     clearTimeout(currentTimeouID);
     $(".popup").hide();
     timeLeft = maxStallingTime;
@@ -45,6 +49,8 @@ function startCountdown() {
                     $(".popup").show();
                     $("#popUpMessage").text("Expiration dans " + timeLeft + " secondes");
                 }
+            } else if (timeLeft == 0) {
+                API.logout();
             } else {
                 $("#popUpMessage").text('Redirection dans ' + (timeBeforeRedirect + timeLeft) + " secondes");
                 if (timeLeft <= -timeBeforeRedirect) {

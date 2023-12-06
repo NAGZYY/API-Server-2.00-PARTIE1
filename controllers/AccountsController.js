@@ -31,9 +31,14 @@ export default class AccountsController extends Controller {
                 let user = this.repository.findByField("Email", loginInfo.Email);
                 if (user != null) {
                     if (user.Password == loginInfo.Password) {
-                        user = this.repository.get(user.Id);
-                        let newToken = TokenManager.create(user);
-                        this.HttpContext.response.created(newToken);
+                        if (user.isBlocked){
+                            this.HttpContext.response.userBlocked("This user is blocked!");
+
+                        }else{
+                            user = this.repository.get(user.Id);
+                            let newToken = TokenManager.create(user);
+                            this.HttpContext.response.created(newToken);
+                        }
                     } else {
                         this.HttpContext.response.wrongPassword("Wrong password.");
                     }
@@ -55,7 +60,6 @@ export default class AccountsController extends Controller {
     }
     sendVerificationEmail(user) {
         // bypass model bindeExtraData wich hide the user verifyCode
-        user = this.repository.findByField("Id", user.Id);
         let html = `
                 Bonjour ${user.Name}, <br /> <br />
                 Voici votre code pour confirmer votre adresse de courriel
@@ -115,11 +119,14 @@ export default class AccountsController extends Controller {
     register(user) {
         if (this.repository != null) {
             user.Created = utilities.nowInSeconds();
-            user.VerifyCode = utilities.makeVerifyCode(6);
+            let verifyCode = utilities.makeVerifyCode(6);
+            user.VerifyCode = verifyCode;
             user.Authorizations = Authorizations.user();
+            user.isBlocked = false;
             let newUser = this.repository.add(user);
             if (this.repository.model.state.isValid) {
                 this.HttpContext.response.created(newUser);
+                newUser.VerifyCode = verifyCode;
                 this.sendVerificationEmail(newUser);
             } else {
                 if (this.repository.model.state.inConflict)
@@ -136,14 +143,24 @@ export default class AccountsController extends Controller {
         if (Authorizations.writeGranted(this.HttpContext, Authorizations.user())) {
             if (this.repository != null) {
                 user.Created = utilities.nowInSeconds();
+                //FoundedUser = valeur Original
                 let foundedUser = this.repository.findByField("Id", user.Id);
                 if (foundedUser != null) {
-                    user.Authorizations = foundedUser.Authorizations; // user cannot change its own authorizations
+                    if (user.adminSender == null ){
+                        user.Authorizations = foundedUser.Authorizations; // user cannot change its own authorizations if he is its own sender
+                    } else {
+                        let foundedAdminSender = this.repository.findByField("Id", user.adminSender);
+                        if (foundedAdminSender.Authorizations["readAccess"] != 2 || foundedAdminSender.Authorizations["writeAccess"] != 2 ){
+                            user.Authorizations = foundedUser.Authorizations;
+                        }
+                        user.Avatar = foundedUser.Avatar;
+                        user.adminSender = undefined;
+                    }
+                    user.isBlocked = foundedUser.isBlocked;
                     user.VerifyCode = foundedUser.VerifyCode;
                     if (user.Password == '') { // password not changed
                         user.Password = foundedUser.Password;
                     }
-                    user.Authorizations = foundedUser.Authorizations;
                     if (user.Email != foundedUser.Email) {
                         user.VerifyCode = utilities.makeVerifyCode(6);
                         this.sendVerificationEmail(user);
@@ -168,7 +185,6 @@ export default class AccountsController extends Controller {
     // GET:account/remove/id
     remove(id) { // warning! this is not an API endpoint
         if (Authorizations.writeGranted(this.HttpContext, Authorizations.user())) {
-            this.tokensRepository.keepByFilter(token => token.User.Id != id);
             let previousAuthorization = this.authorizations;
             this.authorizations = Authorizations.user();
             super.remove(id);

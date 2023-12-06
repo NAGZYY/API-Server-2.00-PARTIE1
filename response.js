@@ -91,6 +91,7 @@ export default class Response {
     unverifiedUser(errormessage = '') { return this.status(480, errormessage); }  // custom bad request status
     userNotFound(errormessage = '') { return this.status(481, errormessage); }    // custom bad request status
     wrongPassword(errormessage = '') { return this.status(482, errormessage); }   // custom bad request status
+    userBlocked(errormessage = '') { return this.status(483, errormessage); }   // custom bad request status
 
     /////////////////////////////////////////////// 500 ///////////////////////////////////////////////////////
 
