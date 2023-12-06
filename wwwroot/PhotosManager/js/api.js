@@ -1,6 +1,6 @@
 ////////////////////////////////////////////// API photos_APIs call ///////////////////////////////////////////////////////
 
-const serverHost = "http://localhost:5000";
+const serverHost = "fire-screeching-gym.glitch.me" //"http://localhost:5000";
 const photos_API = "/api/photos";
 
 class API {
