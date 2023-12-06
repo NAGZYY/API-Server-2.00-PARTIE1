@@ -1,6 +1,22 @@
 let contentScrollPosition = 0;
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 /// Views rendering
+Init_UI();
+
+function Init_UI() {
+    //renderPhotos();
+    $('#createContact').on("click", async function () {
+        saveContentScrollPosition();
+        renderCreateContactForm();
+    });
+    $('#abort').on("click", async function () {
+        renderContacts();
+    });
+    $('#aboutCmd').on("click", function () {
+        renderAbout();
+    });
+}
+
 function showWaitingGif() {
     eraseContent();
     $("#content").append($("<div class='waitingGifcontainer'><img class='waitingGif' src='images/Loading_icon.gif' /></div>'"));
@@ -38,6 +54,39 @@ function renderAbout() {
                 <p>
                     Collège Lionel-Groulx, automne 2023
                 </p>
+            </div>
+        `))
+}
+function renderLogin() {
+
+
+    $("#content").append(
+        $(`
+            <div class="content" style="text-align:center">
+                <h3>${loginMessage}</h3>
+                <form class="form" id="loginForm">
+                <input type='email'
+                name='Email'
+                class="form-control"
+                required
+                RequireMessage = 'Veuillez entrer votre courriel'
+                InvalidMessage = 'Courriel invalide'
+                placeholder="adresse de courriel"
+                value='${Email}'>
+                <span style='color:red'>${EmailError}</span>
+                <input type='password'
+                name='Password'
+                placeholder='Mot de passe'
+                class="form-control"
+                required
+                RequireMessage = 'Veuillez entrer votre mot de passe'>
+                <span style='color:red'>${passwordError}</span>
+                <input type='submit' name='submit' value="Entrer" class="form-control btn-primary">
+                </form>
+                <div class="form">
+                <hr>
+                <button class="form-control btn-info" id="createProfilCmd">Nouveau compte</button>
+                </div>
             </div>
         `))
 }
